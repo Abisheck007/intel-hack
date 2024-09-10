@@ -1,30 +1,38 @@
-// Toggle mobile menu
-const menuToggle = document.querySelector('.menu-toggle');
-const navLinks = document.querySelector('.nav-links');
+// Access the user's webcam
+const video = document.getElementById('video');
+const canvas = document.getElementById('canvas');
+const context = canvas.getContext('2d');
+const captureBtn = document.getElementById('captureBtn');
+const submitAttendance = document.getElementById('submitAttendance');
 
-menuToggle.addEventListener('click', () => {
-    navLinks.classList.toggle('show');
+// Access webcam
+navigator.mediaDevices.getUserMedia({ video: true })
+  .then((stream) => {
+    video.srcObject = stream;
+  })
+  .catch((err) => {
+    console.error("Error accessing webcam: ", err);
+  });
+
+// Capture Image
+captureBtn.addEventListener('click', () => {
+  context.drawImage(video, 0, 0, canvas.width, canvas.height);
+  canvas.style.display = 'block';
 });
 
-// Show the login form based on the user's selection
-function showLoginForm(userType) {
-    const loginFormContainer = document.getElementById('login-form-container');
-    const studentForm = document.getElementById('student-form');
-    const staffForm = document.getElementById('staff-form');
-
-    loginFormContainer.style.display = 'flex';
-
-    if (userType === 'student') {
-        studentForm.style.display = 'block';
-        staffForm.style.display = 'none';
-    } else if (userType === 'staff') {
-        staffForm.style.display = 'block';
-        studentForm.style.display = 'none';
-    }
-}
-
-// Close the login form
-function closeLoginForm() {
-    const loginFormContainer = document.getElementById('login-form-container');
-    loginFormContainer.style.display = 'none';
-}
+// Submit attendance (send image to backend)
+submitAttendance.addEventListener('click', () => {
+  const dataUrl = canvas.toDataURL('image/png');
+  fetch('/submitAttendance', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ image: dataUrl })
+  })
+  .then(response => response.json())
+  .then(data => {
+    alert('Attendance submitted successfully!');
+  })
+  .catch(err => {
+    console.error('Error submitting attendance:', err);
+  });
+});
